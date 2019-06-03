@@ -22,6 +22,10 @@ const TripSchema = new Schema({
   end: {
     type: Date,
     default: null
+  },
+  timeElapsed: {
+    type: Number,
+    default: 0
   }
 });
 
