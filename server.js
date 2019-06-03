@@ -40,6 +40,14 @@ app.patch("/api/status/:line", (req, res) => {
   );
 });
 
+// @route   GET /api/trips/:line
+// @desc    Get trips made on a specific line
+app.get("/api/trips/:line", (req, res) => {
+  Trip.find({ line: req.params.line })
+    .limit(4)
+    .then(trips => res.send(trips));
+});
+
 // @route   POST /api/trips
 // @desc    Post a new trip along with the line and its station of origin
 app.post("/api/trips/", (req, res) => {
@@ -69,6 +77,55 @@ const calculateTimeElapsed = start => {
   let endDate = new Date();
   return Math.round((endDate.getTime() - startDate.getTime()) / 60000);
 };
+
+// @route   GET /api/breakdown
+// @desc    Get breakdown of all trips across all lines
+app.get("/api/breakdown", (req, res) => {
+  Trip.aggregate([
+    {
+      $group: {
+        _id: null,
+        total: {
+          $sum: "$timeElapsed"
+        },
+        avgTime: {
+          $avg: "$timeElapsed"
+        },
+        minTime: {
+          $min: "$timeElapsed"
+        },
+        maxTime: {
+          $max: "$timeElapsed"
+        }
+      }
+    }
+  ]).then(breakdown => res.send(breakdown[0]));
+});
+
+// @route   GET /api/breakdown/:line
+// @desc    Get breakdown of all trips on specific line
+app.get("/api/breakdown/:line", (req, res) => {
+  Trip.aggregate([
+    { $match: { line: req.params.line } },
+    {
+      $group: {
+        _id: null,
+        total: {
+          $sum: "$timeElapsed"
+        },
+        avgTime: {
+          $avg: "$timeElapsed"
+        },
+        minTime: {
+          $min: "$timeElapsed"
+        },
+        maxTime: {
+          $max: "$timeElapsed"
+        }
+      }
+    }
+  ]).then(lineBreakdown => res.send(lineBreakdown[0]));
+});
 
 const port = process.env.PORT || 5000;
 
